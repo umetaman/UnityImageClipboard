@@ -36,6 +36,7 @@ PLUGIN_API void getClipboardImageSize(int* width, int* height, int* bitsPerPixel
 			BITMAPINFO* bitmapInfoPtr = getLockedBitmapInfoPtr();
 
 			if (bitmapInfoPtr != nullptr) {
+				// 水平方向は必ず4バイトの倍数にしなければならない
 				*width = bitmapInfoPtr->bmiHeader.biWidth;
 				*height = bitmapInfoPtr->bmiHeader.biHeight;
 				*bitsPerPixel = bitmapInfoPtr->bmiHeader.biBitCount;
@@ -48,6 +49,7 @@ PLUGIN_API void getClipboardImageSize(int* width, int* height, int* bitsPerPixel
 	CloseClipboard();
 }
 
+// C#側で用意したバッファに書き込む
 PLUGIN_API bool getClipboardImage(unsigned char* buffer) {
 	bool isOpened = OpenClipboard(NULL);
 	bool successCopy = false;
@@ -60,10 +62,37 @@ PLUGIN_API bool getClipboardImage(unsigned char* buffer) {
 				int width, height, bitsPerPixel;
 				getClipboardImageSize(&width, &height, &bitsPerPixel);
 
-				const unsigned char* pixelData = (unsigned char*)bitmapInfoPtr + bitmapInfoPtr->bmiHeader.biSize;
-				memcpy(buffer, pixelData, width * height * (bitsPerPixel / 8));
+				// 1ピクセル辺り24bit(JPEG), 32bit(PNG-32)の画像をサポートする
+				if (bitsPerPixel == 24 || bitsPerPixel == 32) {
+					unsigned char* pixelData = (unsigned char*)(bitmapInfoPtr)+bitmapInfoPtr->bmiHeader.biSize;
+					// 1ピクセル当たりのバイト数
+					int bytesPerPixel = bitsPerPixel / 8;
+				
+					// カラーマスクがあるときはその分シフトする
+					if (bitmapInfoPtr->bmiHeader.biCompression == BI_BITFIELDS) {
+						pixelData += bitmapInfoPtr->bmiHeader.biClrUsed;
+					}
 
-				successCopy = true;
+					// C#で確保したBufferにコピーする
+					int bytesPerLine = width * bytesPerPixel;
+					bytesPerLine += bytesPerLine % 4 == 0 ? 0 : 4 - bytesPerLine % 4;
+
+					unsigned char* dst = buffer;
+					unsigned char* src = pixelData;
+
+					for (int h = 0; h < height; h++) {
+						memcpy(
+							dst,
+							src,
+							width * bytesPerPixel
+						);
+
+						dst += width * bytesPerPixel;
+						src += bytesPerLine;
+					}
+
+					successCopy = true;
+				}
 			}
 
 			GlobalUnlock(bitmapInfoPtr);

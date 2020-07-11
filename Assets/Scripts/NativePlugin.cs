@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Resources;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public static class NativePlugin
@@ -11,7 +12,7 @@ public static class NativePlugin
     [DllImport("Clipboard")]
     private static extern bool hasClipboardImage();
     [DllImport("Clipboard")]
-    private static extern void getClipboardSize(ref int width, ref int height, ref int bitsPerPixel);
+    private static extern void getClipboardImageSize(ref int width, ref int height, ref int bitsPerPixel);
     [DllImport("Clipboard")]
     private static extern bool getClipboardImage(IntPtr buffer);
 
@@ -25,7 +26,7 @@ public static class NativePlugin
         int width = 0;
         int height = 0;
         int bitsPerPixel = 0;
-        getClipboardSize(ref width, ref height, ref bitsPerPixel);
+        getClipboardImageSize(ref width, ref height, ref bitsPerPixel);
     
         if(width * height < 1)
         {
@@ -39,16 +40,51 @@ public static class NativePlugin
             throw new Exception("Not Support Channel Count.");
         }
 
-        // C#側のバッファを用意する
+        Debug.LogFormat("[NativePlugin] GetClipboardImage() Width: {0}, Height: {1}, Channel: {2}", width, height, channel);
+
+        // C#側の領域を用意する
         byte[] buffer = new byte[width * height * channel];
+
         // GCによって移動しないように固定する。必ず開放する。
         GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         // 確保したバッファのポインタ
         IntPtr bufferPtr = handle.AddrOfPinnedObject();
 
+        // クリップボードからコピーする
         bool successCopy = false;
         successCopy = getClipboardImage(bufferPtr);
-        
 
+        // 解放
+        handle.Free();
+
+        if (successCopy)
+        {
+            Texture2D texture = new Texture2D(width, height, TextureFormat.BGRA32, false);
+            
+            // BGR
+            if(channel == 3)
+            {
+                Color32[] pixels = new Color32[width * height];
+                for(int i = 0; i < pixels.Length; i++)
+                {
+                    pixels[i].b = buffer[channel * i];
+                    pixels[i].g = buffer[channel * i + 1];
+                    pixels[i].r = buffer[channel * i + 2];
+                    pixels[i].a = (byte)255;
+                }
+
+                texture.SetPixels32(pixels);
+            }
+            // BGRA
+            else if(channel == 4)
+            {
+                texture.LoadRawTextureData(buffer);
+            }
+
+            texture.Apply();
+            return texture;
+        }
+
+        return null;
     }
 }

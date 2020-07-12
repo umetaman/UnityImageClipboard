@@ -39,7 +39,7 @@ public class SceneController : MonoBehaviour
 }
 ```
 
-![unity_clipboard_result.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/279082/3593129b-f324-e801-cb5c-17d6cb280db0.gif)
+![unity_clipboard_result](https://user-images.githubusercontent.com/32408639/87244076-035f8c80-c476-11ea-909c-43d3b9380079.gif)
 
 # TO DO
 - [x] Windows support

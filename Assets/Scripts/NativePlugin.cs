@@ -60,12 +60,17 @@ public static class NativePlugin
         if (successCopy)
         {
             Texture2D texture = new Texture2D(width, height, TextureFormat.BGRA32, false);
-            
+
+            // BGRA
+            if (channel == 4)
+            {
+                texture.LoadRawTextureData(buffer);
+            }
             // BGR
-            if(channel == 3)
+            else if (channel == 3)
             {
                 Color32[] pixels = new Color32[width * height];
-                for(int i = 0; i < pixels.Length; i++)
+                for (int i = 0; i < pixels.Length; i++)
                 {
                     pixels[i].b = buffer[channel * i];
                     pixels[i].g = buffer[channel * i + 1];
@@ -74,11 +79,6 @@ public static class NativePlugin
                 }
 
                 texture.SetPixels32(pixels);
-            }
-            // BGRA
-            else if(channel == 4)
-            {
-                texture.LoadRawTextureData(buffer);
             }
 
             texture.Apply();

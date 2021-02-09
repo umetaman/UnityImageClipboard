@@ -16,6 +16,10 @@ public class SceneController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(Input.GetKeyDown(KeyCode.Space)){
+            Debug.Log("HasClipboard: " + NativePlugin.HasClipboardImage());
+        }
+
         if (Input.GetKeyDown(KeyCode.A))
         {
             if (NativePlugin.HasClipboardImage())

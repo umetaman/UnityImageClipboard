@@ -2,8 +2,6 @@
 
 A plugin for reading images on clipboard on Windows.
 
-(It will correspond to macOS later.)
-
 - It works in editor and runtime.
 - Read the bitmap of image on clipboard.
 - Get the raw pixel array.
@@ -43,5 +41,5 @@ public class SceneController : MonoBehaviour
 
 # TO DO
 - [x] Windows support
-- [ ] macOS support
+- [x] macOS support
 - [ ] 1, 4, 8, 16bit image support.

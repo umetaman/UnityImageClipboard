@@ -1,4 +1,4 @@
-# UnityNativeClipboard
+# UnityImageClipboard
 
 A plugin for reading images on clipboard on Windows.
 
